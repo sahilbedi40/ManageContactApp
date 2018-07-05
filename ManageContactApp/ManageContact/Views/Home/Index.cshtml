@@ -1,0 +1,338 @@
+﻿
+@{
+    ViewBag.Title = "Contacts";
+}
+
+<h2>Index</h2>
+
+<p>
+    <button class="btn btn-success" onclick="OpenPopUp()">Create</button>
+</p>
+<table id="tblContactGrid" class="table">
+    <thead>
+        <tr>
+            <th>
+                First Name
+            </th>
+            <th>
+                Last Name
+            </th>
+            <th>
+               Email
+            </th>
+            <th>
+               Phone Number
+            </th>
+            <th>
+               Status
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="tbBody">
+
+    </tbody>
+
+@*@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.FirstName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.LastName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Email)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.PhoneNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Status)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+            @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+            @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+        </td>
+    </tr>
+}*@
+
+</table>
+
+<div id="myModel" class="modal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" class="form-control" id="txtFirstName" />
+                        <span id="spFirstName" class="errorMessage">First Name is Required</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" class="form-control" id="txtLastName" />
+                        <span id="spLastName" class="errorMessage">Last Name is Required</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" required class="form-control" id="txtEmail"  />
+                        <span id="spEmail" class="errorMessage">Email is Required</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="number" class="form-control" min="10" max="10" id="txtPhoneNumber" />
+                        <span id="spPhoneNumber" class="errorMessage">Phone Number is Required</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="ddlStatus" class="form-control" >
+                            <option value="0">--Select--</option>
+                            <option value="1">Active</option>
+                            <option value="2">Inactive</option>
+                        </select>
+                        <span id="spStatus" class="errorMessage">Status is Required</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="CreateContact()">Save changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script type="text/javascript">
+
+        var isEdit = false;
+        var selectedId = 0;
+        function OpenPopUp() {
+            ClearControl();
+            clearErrorMessage();
+            isEdit = false;
+            $('#myModel').modal('show');
+        }
+
+        function ClosePopUp()
+        {
+            $('#myModel').modal('hide');
+        }
+
+        $(document).ready(function () {
+            GetContacts();
+        });
+
+        function GetContacts() {
+            $("#tbBody").empty();
+
+            $.ajax({
+                url: '/api/Contact/GetContacts',
+                method: 'GET',
+                header: {
+                    "Accept": "application/json"
+                },
+                dataType: 'json',
+                success: function (response) {
+
+                    console.log(response);
+                    var records = "";
+                    for (var i = 0; i < response.length; i++) {
+                        records = "<tr>";
+                        records += "<td>" + response[i].FirstName + "</td>";
+                        records += "<td>" + response[i].LastName + "</td>";
+                        records += "<td>" + response[i].Email + "</td>";
+                        records += "<td>" + response[i].PhoneNumber + "</td>";
+                        records += "<td>" + response[i].ContactStatus + "</td>";
+                        records += "<td><button class='btn btn-info' onclick='EditContact(this," + response[i].Id + ")'>Edit</button><button style='margin-left:11px;' class='btn btn-dark' onclick='DeleteContact(" + response[i].Id + ")'>Delete</button></td>";
+                        records += "</tr>";
+                        $("#tbBody").append(records);
+                    }
+                    
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+        }
+
+        function CreateContact()
+        {
+            if (validate()) {
+
+                if (isEdit) {
+                    var model = {
+                        FirstName: $("#txtFirstName").val(),
+                        LastName: $("#txtLastName").val(),
+                        Email: $("#txtEmail").val(),
+                        PhoneNumber: $("#txtPhoneNumber").val(),
+                        ContactStatus: $("#ddlStatus :selected").val() == "1" ? "Active" : "Inactive",
+                        Id: selectedId
+                    }
+
+                    $.ajax({
+                        url: "/api/Contact/Edit",
+                        method: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify(model),
+                        dataType: "json",
+                        success: function (response) {
+                            if (response == "success") {
+                                GetContacts();
+                                ClosePopUp();
+                                isEdit = false;
+                            }
+                            else {
+                                alert("Some error occur while saving record. Please try again later.");
+                            }
+                            
+                        },
+                        error: function (err) {
+                            alert("Error");
+                        }
+                    });
+
+                }
+                else
+                {
+                    var model = {
+                        FirstName: $("#txtFirstName").val(),
+                        LastName: $("#txtLastName").val(),
+                        Email: $("#txtEmail").val(),
+                        PhoneNumber: $("#txtPhoneNumber").val(),
+                        ContactStatus: $("#ddlStatus :selected").val() == "1" ? "Active" : "Inactive"
+                    }
+
+                    $.ajax({
+                        url: "/api/Contact/Create",
+                        method: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify(model),
+                        dataType: "json",
+                        success: function (response) {
+                            if (response == "success") {
+                                GetContacts();
+                                ClosePopUp();
+                            }
+                            else {
+                                alert("Some error occur while saving record. Please try again later.");
+                            }
+
+                        },
+                        error: function (err) {
+                            alert("Error");
+                        }
+                    });
+                }                                
+            }
+            
+        }
+
+        function EditContact(control, id) {
+            selectedId = 0;
+            isEdit = true;
+            clearErrorMessage();
+            var row = $(control).closest('tr');
+            
+            $("#txtFirstName").val(row.find('td:nth-child(1)').text());
+            $("#txtLastName").val(row.find('td:nth-child(2)').text());
+            $("#txtEmail").val(row.find('td:nth-child(3)').text());
+            $("#txtPhoneNumber").val(row.find('td:nth-child(4)').text());
+            $("#ddlStatus").val((row.find('td:nth-child(5)').text() == "Active" ? "1" : "2"));
+            $('#myModel').modal('show');    
+            selectedId = id;
+        }
+
+        function DeleteContact(id) {
+            if (confirm("Are you sure to delete this record ?")) {
+                $.ajax({
+                    url: "/api/Contact/Delete?id="+id,
+                    method: "POST",                        
+                    data: id,
+                    dataType: "json",
+                    success: function (response) {
+                        if (response == "success") {
+                            GetContacts();                            
+                        }
+                        else {
+                            alert("Some error occur while saving record. Please try again later.");
+                        }
+
+                    },
+                    error: function (err) {
+                        alert(err);
+                    }
+                });
+            }            
+        }
+
+        function ClearControl() {
+            $("#txtFirstName").val("");
+            $("#txtLastName").val("");
+            $("#txtEmail").val("");
+            $("#txtPhoneNumber").val("");
+            $("#ddlStatus").val("0");
+        }
+
+        function clearErrorMessage() {
+            $("#spFirstName").css('display', "none");
+            $("#spLastName").css('display', "none");
+            $("#spEmail").css('display', "none");
+            $("#spPhoneNumber").css('display', "none");
+            $("#spStatus").css('display', "none");
+        }
+
+        function validate() {
+            var flag = true;
+            if ($("#txtFirstName").val() == "")
+            {
+                $("#spFirstName").css('display', "block");
+                flag = false;
+            }
+
+            if ($("#txtLastName").val() == "") {
+                $("#spLastName").css('display', "block");
+                flag = false;
+            }
+
+            if ($("#txtEmail").val() == "") {
+                $("#spEmail").css('display', "block");
+                flag = false;
+            }
+
+            if ($("#txtPhoneNumber").val() == "") {
+                $("#spPhoneNumber").css('display', "block");
+                flag = false;
+            }
+
+            if ($("#ddlStatus :selected").val() == "0") {
+                $("#spStatus").css('display', "block");
+                flag = false;
+            }
+
+            return flag;
+        }
+
+</script>
+    
+    }
+
+
+<style>
+    #myModel .modal-header .close {
+        margin-top: -24px !important;
+    }
+    .errorMessage{
+        color:red;
+        display:none;
+    }
+
+</style>
