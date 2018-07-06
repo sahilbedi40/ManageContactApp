@@ -33,38 +33,13 @@
 
     </tbody>
 
-@*@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.FirstName)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.LastName)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Email)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.PhoneNumber)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Status)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-            @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-            @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-        </td>
-    </tr>
-}*@
-
 </table>
 
 <div id="myModel" class="modal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Modal title</h5>
+                <h3 class="modal-title" id="hModalText"></h3>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -119,6 +94,7 @@
             ClearControl();
             clearErrorMessage();
             isEdit = false;
+            $('#hModalText').text("Create");
             $('#myModel').modal('show');
         }
 
@@ -240,6 +216,7 @@
             selectedId = 0;
             isEdit = true;
             clearErrorMessage();
+            $('#hModalText').text("Edit");
             var row = $(control).closest('tr');
             
             $("#txtFirstName").val(row.find('td:nth-child(1)').text());
